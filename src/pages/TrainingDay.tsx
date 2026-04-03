@@ -10,6 +10,7 @@ import {
 import type { DayOfWeek, Exercise, SessionEntry, SessionWithEntries, ExerciseProgress } from '../types';
 import ProgressChart from '../components/ProgressChart';
 import ExerciseManager from '../components/ExerciseManager';
+import ExerciseLibrarySection from '../components/ExerciseLibrarySection';
 
 const DAY_NAMES: Record<DayOfWeek, { name: string; focus: string }> = {
   monday: { name: 'Pondělí', focus: 'Nohy' },
@@ -269,6 +270,9 @@ export default function TrainingDay() {
             onUpdate={loadData}
           />
         )}
+
+        {/* Exercise inspiration library */}
+        <ExerciseLibrarySection dayId={dayId} />
       </main>
     </div>
   );
