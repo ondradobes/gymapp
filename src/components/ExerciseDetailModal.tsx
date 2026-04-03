@@ -1,40 +1,18 @@
 import { useEffect, useState } from 'react';
 import type { LibraryExercise } from '../data/exerciseLibrary';
 
-interface WikiSummary {
-  imageUrl: string | null;
-  loaded: boolean;
-}
-
-async function fetchWikiImage(slug: string): Promise<string | null> {
-  try {
-    const res = await fetch(
-      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(slug)}`,
-      { headers: { Accept: 'application/json' } },
-    );
-    if (!res.ok) return null;
-    const data = (await res.json()) as { thumbnail?: { source?: string } };
-    return data.thumbnail?.source ?? null;
-  } catch {
-    return null;
-  }
-}
-
 interface Props {
   exercise: LibraryExercise | null;
   onClose: () => void;
 }
 
 export default function ExerciseDetailModal({ exercise, onClose }: Props) {
-  const [wiki, setWiki] = useState<WikiSummary>({ imageUrl: null, loaded: false });
+  const [imgError, setImgError] = useState(false);
 
+  // Reset error state when exercise changes
   useEffect(() => {
-    if (!exercise) return;
-    setWiki({ imageUrl: null, loaded: false });
-    fetchWikiImage(exercise.wikiSlug).then((url) => {
-      setWiki({ imageUrl: url, loaded: true });
-    });
-  }, [exercise?.wikiSlug]);
+    setImgError(false);
+  }, [exercise?.id]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -47,6 +25,8 @@ export default function ExerciseDetailModal({ exercise, onClose }: Props) {
   }, [exercise]);
 
   if (!exercise) return null;
+
+  const hasImage = exercise.imageUrl && !imgError;
 
   return (
     <>
@@ -64,24 +44,18 @@ export default function ExerciseDetailModal({ exercise, onClose }: Props) {
         </div>
 
         {/* Scrollable content */}
-        <div className="overflow-y-auto flex-1 pb-safe">
-          {/* Image */}
-          <div className="relative w-full bg-zinc-900 min-h-48 flex items-center justify-center overflow-hidden">
-            {!wiki.loaded && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
-              </div>
-            )}
-            {wiki.loaded && wiki.imageUrl && (
+        <div className="overflow-y-auto flex-1 pb-8">
+          {/* Image area */}
+          <div className="relative w-full bg-zinc-900 overflow-hidden flex items-center justify-center min-h-48">
+            {hasImage ? (
               <img
-                src={wiki.imageUrl}
+                src={exercise.imageUrl!}
                 alt={exercise.englishName}
-                className="w-full max-h-72 object-cover"
-                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                className="w-full max-h-72 object-contain bg-zinc-900"
+                onError={() => setImgError(true)}
               />
-            )}
-            {wiki.loaded && !wiki.imageUrl && (
-              <div className="flex flex-col items-center gap-2 py-10 text-zinc-600">
+            ) : (
+              <div className="flex flex-col items-center gap-2 py-12 text-zinc-600">
                 <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
@@ -101,20 +75,17 @@ export default function ExerciseDetailModal({ exercise, onClose }: Props) {
           </div>
 
           {/* Content */}
-          <div className="px-5 pt-5 pb-8">
-            {/* Header */}
+          <div className="px-5 pt-5">
             <p className="text-xs text-violet-400 font-semibold uppercase tracking-widest mb-1">
               {exercise.primaryMuscle}
             </p>
             <h2 className="text-2xl font-bold text-white mb-1">{exercise.name}</h2>
             <p className="text-xs text-zinc-600 mb-4">{exercise.englishName}</p>
 
-            {/* Description */}
             <p className="text-zinc-300 text-sm leading-relaxed mb-5">
               {exercise.description}
             </p>
 
-            {/* Tips */}
             <div>
               <p className="text-xs text-zinc-500 uppercase tracking-widest mb-3">
                 Tipy pro správnou techniku
