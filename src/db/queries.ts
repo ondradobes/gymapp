@@ -1,0 +1,111 @@
+import { getDb } from './schema';
+import type { DayOfWeek, Exercise, Session, SessionEntry, SessionWithEntries } from '../types';
+
+// ── Exercises ──────────────────────────────────────────────────────────────
+
+export async function getExercises(dayId: DayOfWeek): Promise<Exercise[]> {
+  const db = await getDb();
+  const all = await db.getAllFromIndex('exercises', 'by-day', dayId);
+  return all.sort((a, b) => a.order - b.order);
+}
+
+export async function addExercise(
+  dayId: DayOfWeek,
+  name: string,
+): Promise<Exercise> {
+  const db = await getDb();
+  const existing = await getExercises(dayId);
+  const order = existing.length > 0 ? Math.max(...existing.map((e) => e.order)) + 1 : 0;
+  const exercise: Omit<Exercise, 'id'> = {
+    trainingDayId: dayId,
+    name: name.trim(),
+    order,
+    isHidden: false,
+  };
+  const id = await db.add('exercises', exercise as Exercise);
+  return { ...exercise, id } as Exercise;
+}
+
+export async function updateExercise(exercise: Exercise): Promise<void> {
+  const db = await getDb();
+  await db.put('exercises', exercise);
+}
+
+export async function toggleExerciseVisibility(exerciseId: number): Promise<void> {
+  const db = await getDb();
+  const exercise = await db.get('exercises', exerciseId);
+  if (!exercise) return;
+  await db.put('exercises', { ...exercise, isHidden: !exercise.isHidden });
+}
+
+// ── Sessions ───────────────────────────────────────────────────────────────
+
+export async function getSessionsByDay(dayId: DayOfWeek): Promise<Session[]> {
+  const db = await getDb();
+  const sessions = await db.getAllFromIndex('sessions', 'by-day', dayId);
+  return sessions.sort((a, b) => b.date.localeCompare(a.date)); // newest first
+}
+
+export async function getLastSession(dayId: DayOfWeek): Promise<SessionWithEntries | null> {
+  const sessions = await getSessionsByDay(dayId);
+  if (sessions.length === 0) return null;
+  const session = sessions[0];
+  const entries = await getEntriesForSession(session.id);
+  return { session, entries };
+}
+
+export async function createSession(dayId: DayOfWeek, date: string): Promise<Session> {
+  const db = await getDb();
+  const session: Omit<Session, 'id'> = { trainingDayId: dayId, date };
+  const id = await db.add('sessions', session as Session);
+  return { ...session, id } as Session;
+}
+
+// ── Session Entries ────────────────────────────────────────────────────────
+
+export async function getEntriesForSession(sessionId: number): Promise<SessionEntry[]> {
+  const db = await getDb();
+  return db.getAllFromIndex('sessionEntries', 'by-session', sessionId);
+}
+
+export async function saveSessionEntries(
+  sessionId: number,
+  entries: Omit<SessionEntry, 'id'>[],
+): Promise<void> {
+  const db = await getDb();
+  const tx = db.transaction('sessionEntries', 'readwrite');
+  await Promise.all(entries.map((entry) => tx.store.add({ ...entry, sessionId } as SessionEntry)));
+  await tx.done;
+}
+
+export async function getProgressForExercise(
+  exerciseId: number,
+): Promise<Array<{ date: string; weight: number }>> {
+  const db = await getDb();
+  const entries = await db.getAllFromIndex('sessionEntries', 'by-exercise', exerciseId);
+  const sessionIds = [...new Set(entries.map((e) => e.sessionId))];
+
+  const sessions = await Promise.all(sessionIds.map((id) => db.get('sessions', id)));
+
+  return entries
+    .filter((e) => e.weight !== null)
+    .map((entry) => {
+      const session = sessions.find((s) => s?.id === entry.sessionId);
+      return { date: session?.date ?? '', weight: entry.weight as number };
+    })
+    .filter((p) => p.date !== '')
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+export async function getAllSessionsWithEntries(): Promise<SessionWithEntries[]> {
+  const db = await getDb();
+  const sessions = await db.getAll('sessions');
+  sessions.sort((a, b) => b.date.localeCompare(a.date));
+
+  return Promise.all(
+    sessions.map(async (session) => ({
+      session,
+      entries: await getEntriesForSession(session.id),
+    })),
+  );
+}
