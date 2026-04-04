@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import type { TrainingDay, DayOfWeek } from '../types';
 import { getLastSessionDate, getSessionCount, getExercises } from '../db/queries';
+import BackupSection from '../components/BackupSection';
 
 const QUOTES = [
   { text: 'Bolest je dočasná. Vzdát se je navždy.', author: 'Lance Armstrong' },
@@ -208,6 +209,8 @@ export default function Home() {
             <span className="text-zinc-300 font-medium">Historie tréninků</span>
           </div>
         </Link>
+
+        <BackupSection />
       </main>
     </div>
   );
