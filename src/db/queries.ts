@@ -147,6 +147,26 @@ export async function getExerciseHistory(exerciseId: number): Promise<ExerciseHi
   return result;
 }
 
+export async function updateSessionEntry(entry: SessionEntry): Promise<void> {
+  const db = await getDb();
+  await db.put('sessionEntries', entry);
+}
+
+export async function deleteSessionEntry(entryId: number): Promise<void> {
+  const db = await getDb();
+  await db.delete('sessionEntries', entryId);
+}
+
+export async function deleteSession(sessionId: number): Promise<void> {
+  const db = await getDb();
+  // Delete all entries first, then the session
+  const entries = await db.getAllFromIndex('sessionEntries', 'by-session', sessionId);
+  const tx = db.transaction(['sessionEntries', 'sessions'], 'readwrite');
+  await Promise.all(entries.map((e) => tx.objectStore('sessionEntries').delete(e.id)));
+  await tx.objectStore('sessions').delete(sessionId);
+  await tx.done;
+}
+
 export async function getAllSessionsWithEntries(): Promise<SessionWithEntries[]> {
   const db = await getDb();
   const sessions = await db.getAll('sessions');
