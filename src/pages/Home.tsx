@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import type { TrainingDay, DayOfWeek } from '../types';
+import { getLastSessionDate, getSessionCount, getExercises } from '../db/queries';
 
 const QUOTES = [
   { text: 'Bolest je dočasná. Vzdát se je navždy.', author: 'Lance Armstrong' },
@@ -36,7 +38,6 @@ const QUOTES = [
 
 function getDailyQuote() {
   const now = new Date();
-  // Day-of-year index → stejný citát celý den, jiný každý den
   const start = new Date(now.getFullYear(), 0, 0);
   const dayOfYear = Math.floor((now.getTime() - start.getTime()) / 86_400_000);
   return QUOTES[dayOfYear % QUOTES.length];
@@ -49,16 +50,72 @@ const TRAINING_DAYS: TrainingDay[] = [
 ];
 
 function getTodayDayId(): DayOfWeek | null {
-  const day = new Date().getDay(); // 0=Sun, 1=Mon, 3=Wed, 5=Fri
+  const day = new Date().getDay();
   if (day === 1) return 'monday';
   if (day === 3) return 'wednesday';
   if (day === 5) return 'friday';
   return null;
 }
 
+function formatRelativeDate(dateStr: string): string {
+  const today = new Date();
+  const d = new Date(dateStr);
+  const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const dMidnight = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diffDays = Math.round((todayMidnight.getTime() - dMidnight.getTime()) / 86_400_000);
+
+  if (diffDays === 0) return 'dnes';
+  if (diffDays === 1) return 'včera';
+  if (diffDays < 7) return `před ${diffDays} dny`;
+  if (diffDays < 14) return 'před týdnem';
+  if (diffDays < 21) return 'před 2 týdny';
+  if (diffDays < 28) return 'před 3 týdny';
+  return d.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short' });
+}
+
+function pluralCviky(n: number): string {
+  if (n === 1) return '1 cvik';
+  if (n < 5) return `${n} cviky`;
+  return `${n} cviků`;
+}
+
+interface DayMeta {
+  lastDate: string | null;
+  sessionCount: number;
+  exerciseCount: number;
+}
+
 export default function Home() {
   const todayId = getTodayDayId();
   const quote = getDailyQuote();
+  const [meta, setMeta] = useState<Record<DayOfWeek, DayMeta> | null>(null);
+
+  useEffect(() => {
+    async function load() {
+      const days: DayOfWeek[] = ['monday', 'wednesday', 'friday'];
+      const results = await Promise.all(
+        days.map(async (d) => {
+          const [lastDate, sessionCount, exercises] = await Promise.all([
+            getLastSessionDate(d),
+            getSessionCount(d),
+            getExercises(d),
+          ]);
+          return {
+            day: d,
+            lastDate,
+            sessionCount,
+            exerciseCount: exercises.filter((e) => !e.isHidden).length,
+          };
+        }),
+      );
+      const map = {} as Record<DayOfWeek, DayMeta>;
+      results.forEach(({ day, lastDate, sessionCount, exerciseCount }) => {
+        map[day] = { lastDate, sessionCount, exerciseCount };
+      });
+      setMeta(map);
+    }
+    load();
+  }, []);
 
   return (
     <div className="min-h-svh bg-[#0f0f0f] flex flex-col">
@@ -79,6 +136,8 @@ export default function Home() {
       <main className="flex-1 px-5 pb-10 flex flex-col gap-3">
         {TRAINING_DAYS.map((day) => {
           const isToday = day.id === todayId;
+          const dayMeta = meta?.[day.id];
+
           return (
             <Link
               key={day.id}
@@ -92,7 +151,7 @@ export default function Home() {
               `}
             >
               <div className="flex items-center justify-between">
-                <div>
+                <div className="flex-1 min-w-0">
                   <p className={`text-xs font-semibold uppercase tracking-widest mb-1 ${isToday ? 'text-violet-200' : 'text-zinc-500'}`}>
                     {day.name}
                     {isToday && <span className="ml-2 text-violet-200">· Dnes</span>}
@@ -100,8 +159,37 @@ export default function Home() {
                   <p className={`text-xl font-bold ${isToday ? 'text-white' : 'text-zinc-100'}`}>
                     {day.focus}
                   </p>
+
+                  {/* Meta row */}
+                  {dayMeta && (
+                    <div className={`flex items-center gap-2 mt-2 text-xs ${isToday ? 'text-violet-200/70' : 'text-zinc-500'}`}>
+                      {dayMeta.exerciseCount > 0 && (
+                        <span>{pluralCviky(dayMeta.exerciseCount)}</span>
+                      )}
+                      {dayMeta.sessionCount > 0 && dayMeta.lastDate && (
+                        <>
+                          {dayMeta.exerciseCount > 0 && (
+                            <span className={isToday ? 'text-violet-300/40' : 'text-zinc-700'}>·</span>
+                          )}
+                          <span>Naposledy {formatRelativeDate(dayMeta.lastDate)}</span>
+                        </>
+                      )}
+                      {dayMeta.sessionCount === 0 && dayMeta.exerciseCount === 0 && (
+                        <span>Zatím žádné cviky</span>
+                      )}
+                      {dayMeta.sessionCount === 0 && dayMeta.exerciseCount > 0 && (
+                        <>
+                          <span className={isToday ? 'text-violet-300/40' : 'text-zinc-700'}>·</span>
+                          <span>Zatím nezalogováno</span>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <svg className={`w-5 h-5 ${isToday ? 'text-violet-200' : 'text-zinc-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg
+                  className={`w-5 h-5 shrink-0 ml-3 ${isToday ? 'text-violet-200' : 'text-zinc-600'}`}
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
               </div>

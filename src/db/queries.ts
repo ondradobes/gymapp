@@ -1,5 +1,6 @@
 import { getDb } from './schema';
-import type { DayOfWeek, Exercise, Session, SessionEntry, SessionWithEntries } from '../types';
+import type { DayOfWeek, Exercise, Session, SessionEntry, SessionWithEntries, ExerciseHistoryEntry } from '../types';
+import { calcEstimatedOneRM } from '../utils/progressLogic';
 
 // ── Exercises ──────────────────────────────────────────────────────────────
 
@@ -54,6 +55,16 @@ export async function getLastSession(dayId: DayOfWeek): Promise<SessionWithEntri
   return { session, entries };
 }
 
+export async function getLastSessionDate(dayId: DayOfWeek): Promise<string | null> {
+  const sessions = await getSessionsByDay(dayId);
+  return sessions.length > 0 ? sessions[0].date : null;
+}
+
+export async function getSessionCount(dayId: DayOfWeek): Promise<number> {
+  const sessions = await getSessionsByDay(dayId);
+  return sessions.length;
+}
+
 export async function createSession(dayId: DayOfWeek, date: string): Promise<Session> {
   const db = await getDb();
   const session: Omit<Session, 'id'> = { trainingDayId: dayId, date };
@@ -95,6 +106,45 @@ export async function getProgressForExercise(
     })
     .filter((p) => p.date !== '')
     .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+export async function getExerciseById(exerciseId: number): Promise<Exercise | undefined> {
+  const db = await getDb();
+  return db.get('exercises', exerciseId);
+}
+
+/**
+ * Returns the full history for one exercise, sorted chronologically (oldest first).
+ * Skips entries without weight or reps data.
+ */
+export async function getExerciseHistory(exerciseId: number): Promise<ExerciseHistoryEntry[]> {
+  const db = await getDb();
+  const entries = await db.getAllFromIndex('sessionEntries', 'by-exercise', exerciseId);
+
+  const sessionIds = [...new Set(entries.map((e) => e.sessionId))];
+  const sessions = await Promise.all(sessionIds.map((id) => db.get('sessions', id)));
+  const sessionMap = new Map<number, Session>();
+  sessions.forEach((s) => { if (s) sessionMap.set(s.id, s); });
+
+  const result: ExerciseHistoryEntry[] = entries
+    .filter((e) => e.weight != null && e.reps != null && e.weight > 0 && e.reps > 0)
+    .map((e) => {
+      const session = sessionMap.get(e.sessionId);
+      const weight = e.weight as number;
+      const reps = e.reps as number;
+      return {
+        sessionId: e.sessionId,
+        date: session?.date ?? '',
+        weight,
+        reps,
+        sets: e.sets ?? 1,
+        estimatedOneRM: calcEstimatedOneRM(weight, reps),
+      };
+    })
+    .filter((e) => e.date !== '')
+    .sort((a, b) => a.date.localeCompare(b.date)); // oldest first
+
+  return result;
 }
 
 export async function getAllSessionsWithEntries(): Promise<SessionWithEntries[]> {

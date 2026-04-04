@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, Link } from 'react-router';
 import { getAllSessionsWithEntries, getExercises } from '../db/queries';
 import type { SessionWithEntries, Exercise, DayOfWeek } from '../types';
 
@@ -12,6 +12,13 @@ const DAY_NAMES: Record<DayOfWeek, string> = {
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
   return d.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function calcVolume(entries: import('../types').SessionEntry[]): number {
+  return entries.reduce((sum, e) => {
+    if (e.weight == null || e.reps == null) return sum;
+    return sum + e.weight * e.reps * (e.sets ?? 1);
+  }, 0);
 }
 
 export default function History() {
@@ -63,48 +70,74 @@ export default function History() {
           </div>
         )}
 
-        {sessions.map(({ session, entries }) => (
-          <div key={session.id} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <p className="text-xs text-zinc-500 uppercase tracking-widest">
-                  {DAY_NAMES[session.trainingDayId]}
-                </p>
-                <p className="text-white font-semibold text-base mt-0.5">
-                  {formatDate(session.date)}
-                </p>
+        {sessions.map(({ session, entries }) => {
+          const filteredEntries = entries.filter((e) => e.weight != null);
+          const totalVolume = calcVolume(filteredEntries);
+          return (
+            <div key={session.id} className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+              {/* Session header */}
+              <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-zinc-800/60">
+                <div>
+                  <p className="text-[10px] text-zinc-500 uppercase tracking-widest">
+                    {DAY_NAMES[session.trainingDayId]}
+                  </p>
+                  <p className="text-white font-semibold text-base mt-0.5">
+                    {formatDate(session.date)}
+                  </p>
+                  {totalVolume > 0 && (
+                    <p className="text-xs text-zinc-600 mt-0.5">
+                      Objem: <span className="text-zinc-500 font-medium">{totalVolume.toLocaleString('cs-CZ')} kg</span>
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={() => navigate(`/day/${session.trainingDayId}`)}
+                  className="text-xs text-violet-400 hover:text-violet-300 transition-colors px-2 py-1"
+                >
+                  Logovat →
+                </button>
               </div>
-              <button
-                onClick={() => navigate(`/day/${session.trainingDayId}`)}
-                className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
-              >
-                Otevřít →
-              </button>
-            </div>
 
-            <ul className="flex flex-col gap-1.5">
-              {entries
-                .filter((e) => e.weight != null)
-                .map((entry) => {
-                  const ex = exerciseMap[entry.exerciseId];
-                  if (!ex) return null;
-                  return (
-                    <li key={entry.id} className="flex items-center justify-between text-sm">
-                      <span className="text-zinc-400">{ex.name}</span>
-                      <span className="text-zinc-200 font-medium tabular-nums">
-                        {entry.weight} kg
-                        {entry.sets && entry.reps && (
-                          <span className="text-zinc-500 font-normal ml-2">
-                            {entry.sets}×{entry.reps}
+              {/* Exercise rows */}
+              {filteredEntries.length === 0 ? (
+                <p className="px-4 py-3 text-xs text-zinc-600">Žádná data</p>
+              ) : (
+                <ul className="divide-y divide-zinc-800/40">
+                  {filteredEntries.map((entry) => {
+                    const ex = exerciseMap[entry.exerciseId];
+                    if (!ex) return null;
+                    return (
+                      <li key={entry.id} className="flex items-center justify-between px-4 py-3 text-sm group">
+                        <Link
+                          to={`/exercise/${ex.id}/progress`}
+                          className="text-zinc-300 hover:text-violet-400 transition-colors truncate flex-1 min-w-0 mr-3"
+                        >
+                          {ex.name}
+                        </Link>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <span className="text-zinc-200 font-medium tabular-nums">
+                            {entry.weight} kg
+                            {entry.sets != null && entry.reps != null && (
+                              <span className="text-zinc-500 font-normal ml-1.5">
+                                {entry.sets}×{entry.reps}
+                              </span>
+                            )}
                           </span>
-                        )}
-                      </span>
-                    </li>
-                  );
-                })}
-            </ul>
-          </div>
-        ))}
+                          <Link
+                            to={`/exercise/${ex.id}/progress`}
+                            className="text-[10px] text-zinc-600 hover:text-violet-400 transition-colors opacity-0 group-hover:opacity-100"
+                          >
+                            Graf →
+                          </Link>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          );
+        })}
       </main>
     </div>
   );

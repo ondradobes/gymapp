@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router';
+import { useParams, useNavigate, Link } from 'react-router';
 import {
   getExercises,
   getLastSession,
@@ -11,6 +11,7 @@ import type { DayOfWeek, Exercise, SessionEntry, SessionWithEntries, ExercisePro
 import ProgressChart from '../components/ProgressChart';
 import ExerciseManager from '../components/ExerciseManager';
 import ExerciseLibrarySection from '../components/ExerciseLibrarySection';
+import RestTimer from '../components/RestTimer';
 
 const DAY_NAMES: Record<DayOfWeek, { name: string; focus: string }> = {
   monday: { name: 'Pondělí', focus: 'Nohy' },
@@ -33,6 +34,7 @@ interface WeightInput {
   weight: string;
   reps: string;
   sets: string;
+  note: string;
 }
 
 export default function TrainingDay() {
@@ -68,6 +70,7 @@ export default function TrainingDay() {
         weight: lastEntry?.weight != null ? String(lastEntry.weight) : '',
         reps: lastEntry?.reps != null ? String(lastEntry.reps) : '',
         sets: lastEntry?.sets != null ? String(lastEntry.sets) : '',
+        note: '',
       };
     });
     setInputs(initial);
@@ -107,7 +110,7 @@ export default function TrainingDay() {
           weight: inp?.weight ? parseFloat(inp.weight) : null,
           reps: inp?.reps ? parseInt(inp.reps, 10) : null,
           sets: inp?.sets ? parseInt(inp.sets, 10) : null,
-          note: '',
+          note: inp?.note ?? '',
         };
       });
 
@@ -176,16 +179,24 @@ export default function TrainingDay() {
               {/* Exercise header */}
               <div className="flex items-center justify-between mb-3">
                 <p className="font-semibold text-white text-base">{ex.name}</p>
-                <button
-                  onClick={() => openChart(ex)}
-                  className={`text-xs px-3 py-1 rounded-lg transition-colors ${
-                    isChartOpen
-                      ? 'bg-violet-600 text-white'
-                      : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200'
-                  }`}
-                >
-                  Graf
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => openChart(ex)}
+                    className={`text-xs px-3 py-1 rounded-lg transition-colors ${
+                      isChartOpen
+                        ? 'bg-violet-600 text-white'
+                        : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200'
+                    }`}
+                  >
+                    Graf
+                  </button>
+                  <Link
+                    to={`/exercise/${ex.id}/progress`}
+                    className="text-xs px-3 py-1 rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200 transition-colors"
+                  >
+                    Progres
+                  </Link>
+                </div>
               </div>
 
               {/* Last session reference */}
@@ -232,6 +243,17 @@ export default function TrainingDay() {
                 </div>
               </div>
 
+              {/* Note field */}
+              <div className="mt-2">
+                <input
+                  type="text"
+                  value={inp.note}
+                  onChange={(e) => updateInput(ex.id, 'note', e.target.value)}
+                  placeholder="Poznámka (volitelné)…"
+                  className="w-full bg-transparent border-0 border-t border-zinc-800 pt-2 text-zinc-500 text-xs focus:outline-none focus:text-zinc-300 placeholder-zinc-700 transition-colors"
+                />
+              </div>
+
               {/* Chart */}
               {isChartOpen && (
                 <ProgressChart data={chartData} exerciseName={ex.name} />
@@ -274,6 +296,9 @@ export default function TrainingDay() {
         {/* Exercise inspiration library */}
         <ExerciseLibrarySection dayId={dayId} />
       </main>
+
+      {/* Floating rest timer */}
+      <RestTimer />
     </div>
   );
 }
