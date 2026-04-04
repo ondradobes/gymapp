@@ -15,7 +15,7 @@ const LEGS: LibraryExercise[] = [
     id: 'squat',
     name: 'Dřep s činkou',
     englishName: 'Barbell Back Squat',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Squats.svg/330px-Squats.svg.png',
+    imageUrl: '/exercises/squat.png',
     primaryMuscle: 'Kvadricepsy · Hýžďové svaly',
     description:
       'Král cviků pro dolní část těla. Činka leží na horní části trapézů, chodidla na šířku ramen nebo mírně více. Pohyb jde do sedu — kyčle klesají rovnoměrně dolů, kolena sledují směr špiček.',
@@ -30,7 +30,7 @@ const LEGS: LibraryExercise[] = [
     id: 'leg-press',
     name: 'Leg Press',
     englishName: 'Leg Press',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Muscle_Strengthening_at_the_Gym_-_Seated_Leg_Press.webm/250px--Muscle_Strengthening_at_the_Gym_-_Seated_Leg_Press.webm.jpg',
+    imageUrl: '/exercises/leg-press.png',
     primaryMuscle: 'Kvadricepsy · Hýžďové svaly',
     description:
       'Izolovaný cvik na nohách bez zátěže na páteři. Chodidla jsou na platformě na šířku ramen. Pohyb spočívá v řízeném spouštění a vytlačení váhy.',
@@ -45,7 +45,7 @@ const LEGS: LibraryExercise[] = [
     id: 'romanian-deadlift',
     name: 'Rumunský mrtvý tah',
     englishName: 'Romanian Deadlift',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/e/e8/Romanian-deadlift-1.png',
+    imageUrl: '/exercises/romanian-deadlift.png',
     primaryMuscle: 'Zadní stehna · Hýžďové svaly',
     description:
       'Výborný cvik pro zadní řetězec. Činka klouže těsně podél nohou dolů, kyčle jdou dozadu (ne dolů), záda zůstávají rovná. Pocit tahu v zadních stehnech signalizuje správnou techniku.',
@@ -60,7 +60,7 @@ const LEGS: LibraryExercise[] = [
     id: 'lunge',
     name: 'Výpad',
     englishName: 'Lunge',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Airman_performing_lunge.jpg/330px-Airman_performing_lunge.jpg',
+    imageUrl: '/exercises/lunge.png',
     primaryMuscle: 'Kvadricepsy · Hýžďové svaly',
     description:
       'Unilaterální cvik, který odstraňuje svalové dysbalance. Krok vpřed, obě kolena se ohnou do 90°. Přední koleno nepřekračuje špičku.',
@@ -75,7 +75,7 @@ const LEGS: LibraryExercise[] = [
     id: 'leg-extension',
     name: 'Leg Extension',
     englishName: 'Leg extension',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Leg_Extension.jpg/330px-Leg_Extension.jpg',
+    imageUrl: '/exercises/leg-extension.png',
     primaryMuscle: 'Kvadricepsy',
     description:
       'Izolační cvik výhradně na kvadricepsy. Prováděj pomalým tempem, plně stáhni kvadriceps nahoře a řízeně spouštěj dolů.',
@@ -89,7 +89,7 @@ const LEGS: LibraryExercise[] = [
     id: 'leg-curl',
     name: 'Leg Curl',
     englishName: 'Leg curl',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/LyingLegCurlMachineExercise.JPG/330px-LyingLegCurlMachineExercise.JPG',
+    imageUrl: '/exercises/leg-curl.png',
     primaryMuscle: 'Zadní stehna (hamstringy)',
     description:
       'Izolační cvik pro hamstringy. Prováděj vleže nebo vsedě. Plný rozsah pohybu — od plného natažení po maximální pokrčení.',
@@ -103,7 +103,7 @@ const LEGS: LibraryExercise[] = [
     id: 'calf-raise',
     name: 'Výpony (Calf Raise)',
     englishName: 'Calf raise',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/3/30/Calf-raises-1.png',
+    imageUrl: '/exercises/calf-raise.png',
     primaryMuscle: 'Lýtkové svaly (Gastrocnemius)',
     description:
       'Cvik pro lýtka. Stoj na špičkách s plným rozsahem — od maximálního dorsálního flexi dolů po maximální plantární flexi (výpon) nahoře.',
@@ -117,7 +117,7 @@ const LEGS: LibraryExercise[] = [
     id: 'goblet-squat',
     name: 'Goblet Dřep',
     englishName: 'Goblet squat',
-    imageUrl: null,
+    imageUrl: '/exercises/goblet-squat.png',
     primaryMuscle: 'Kvadricepsy · Hýžďové svaly · Core',
     description:
       'Skvělá varianta dřepu s kettlebellem nebo jednoručkou drženou před hrudníkem. Díky přední zátěži přirozeně udržuje trup vzpřímený a je ideální pro nácvik techniky.',
@@ -134,7 +134,7 @@ const CHEST_SHOULDERS: LibraryExercise[] = [
     id: 'bench-press',
     name: 'Bench Press',
     englishName: 'Bench press',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Bench_press_1.jpg/330px-Bench_press_1.jpg',
+    imageUrl: '/exercises/bench-press.png',
     primaryMuscle: 'Prsní svaly · Přední část deltoidů · Tricepsy',
     description:
       'Základní cvik pro prsní svaly. Lehni na lavici, lopatky stažené a stlačené dolů, chodidla pevně na zemi. Činka klesá řízeně na spodní část prsou.',
@@ -149,7 +149,7 @@ const CHEST_SHOULDERS: LibraryExercise[] = [
     id: 'incline-bench-press',
     name: 'Nakloněný Bench Press',
     englishName: 'Incline bench press',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/8/86/Incline-bench-press-1.png',
+    imageUrl: '/exercises/incline-bench-press.png',
     primaryMuscle: 'Horní část prsních svalů · Přední deltoid',
     description:
       'Varianta bench pressu na nakloněné lavici (30–45°). Cílí primárně na horní část prsního svalu a přední deltoid.',
@@ -163,7 +163,7 @@ const CHEST_SHOULDERS: LibraryExercise[] = [
     id: 'dips',
     name: 'Dipy',
     englishName: 'Dip (exercise)',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Dipexercise.svg/330px-Dipexercise.svg.png',
+    imageUrl: '/exercises/dips.png',
     primaryMuscle: 'Dolní část prsních svalů · Tricepsy',
     description:
       'Výborný cvik pro dolní část prsních svalů (při předklonu) nebo tricepsy (při vzpřímení). Těžký, ale velmi efektivní.',
@@ -178,7 +178,7 @@ const CHEST_SHOULDERS: LibraryExercise[] = [
     id: 'overhead-press',
     name: 'Tlak nad hlavou (OHP)',
     englishName: 'Overhead press',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Seated-military-shoulder-press-1.png/330px-Seated-military-shoulder-press-1.png',
+    imageUrl: '/exercises/overhead-press.png',
     primaryMuscle: 'Deltoidní svaly · Tricepsy · Trapézy',
     description:
       'Základní cvik pro ramena. Činka se tlačí přímo nad hlavou ze startovní pozice před tělem u klíční kosti. Celé tělo je aktivní — ne jen ramena.',
@@ -193,7 +193,7 @@ const CHEST_SHOULDERS: LibraryExercise[] = [
     id: 'lateral-raise',
     name: 'Laterální zdvihy',
     englishName: 'Lateral raise',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/d/d8/DumbbellLateralRaise.JPG',
+    imageUrl: '/exercises/lateral-raise.png',
     primaryMuscle: 'Střední část deltoidů',
     description:
       'Izolační cvik pro střední část deltoidového svalu — klíčový pro vizuálně širší ramena. Prováděj s nižší vahou a důrazem na kontrakci.',
@@ -208,7 +208,7 @@ const CHEST_SHOULDERS: LibraryExercise[] = [
     id: 'front-raise',
     name: 'Přední zdvihy',
     englishName: 'Front raise',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Dumbbell-front-raises-1.png/330px-Dumbbell-front-raises-1.png',
+    imageUrl: '/exercises/front-raise.png',
     primaryMuscle: 'Přední část deltoidů',
     description:
       'Izolační cvik pro přední část deltoidů. Prováděj střídavě nebo obouruč, buď s činkami nebo s tyčí.',
@@ -222,7 +222,7 @@ const CHEST_SHOULDERS: LibraryExercise[] = [
     id: 'cable-fly',
     name: 'Peck Deck / Motýlek',
     englishName: 'Fly (exercise)',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/DumbbellFlye.JPG/330px-DumbbellFlye.JPG',
+    imageUrl: '/exercises/cable-fly.png',
     primaryMuscle: 'Prsní svaly (střed)',
     description:
       'Izolační cvik pro prsní svaly, zdůrazňující střední část. Lze provádět na stroji (peck deck) nebo s kladkami pro konstantní napětí.',
@@ -236,7 +236,7 @@ const CHEST_SHOULDERS: LibraryExercise[] = [
     id: 'arnold-press',
     name: 'Arnold Press',
     englishName: 'Arnold press',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/2/2e/Arnold-press-1.png',
+    imageUrl: '/exercises/arnold-press.png',
     primaryMuscle: 'Deltoidní svaly (všechny tři části)',
     description:
       'Varianta tlaku nad hlavou s rotací zápěstí pojmenovaná po Arnoldu Schwarzeneggerovi. Zapojuje všechny tři části deltoidového svalu díky rotačnímu pohybu.',
@@ -253,7 +253,7 @@ const BACK_ARMS: LibraryExercise[] = [
     id: 'deadlift',
     name: 'Mrtvý tah',
     englishName: 'Deadlift',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Deadlift-phase_1.JPG/330px-Deadlift-phase_1.JPG',
+    imageUrl: '/exercises/deadlift.png',
     primaryMuscle: 'Celý zadní řetězec · Záda · Hýžďové svaly',
     description:
       'Nejkomplexnější silový cvik. Tyč leží na zemi, úchop těsně za stehny, záda rovná, kyčle dolů, lopatky nad tyčí. Zdvíhej jako bys tlačil zem od sebe.',
@@ -268,7 +268,7 @@ const BACK_ARMS: LibraryExercise[] = [
     id: 'bent-over-row',
     name: 'Veslování s tyčí',
     englishName: 'Bent-over row',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Reverse_grips_bent_over_barbell_rows_1.svg/330px-Reverse_grips_bent_over_barbell_rows_1.svg.png',
+    imageUrl: '/exercises/bent-over-row.png',
     primaryMuscle: 'Střední záda (Rhomboids) · Latissimus · Bicepsy',
     description:
       'Základní cvik pro celá záda. Předklon přibližně 45°, tyč se táhne k spodní části břicha. Lopatky se aktivně stahují k sobě v horní poloze.',
@@ -283,7 +283,7 @@ const BACK_ARMS: LibraryExercise[] = [
     id: 'lat-pulldown',
     name: 'Přítahy horní kladky',
     englishName: 'Lat pulldown',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/PulldownMachineExercise.JPG/330px-PulldownMachineExercise.JPG',
+    imageUrl: '/exercises/lat-pulldown.png',
     primaryMuscle: 'Latissimus dorsi · Bicepsy',
     description:
       'Výborný cvik pro latissimus dorsi — záda do tvaru V. Táhni hrazdu k horní části hrudníku, loktky jdou přímo dolů k bokům.',
@@ -298,7 +298,7 @@ const BACK_ARMS: LibraryExercise[] = [
     id: 'pull-up',
     name: 'Shyby',
     englishName: 'Pull-up',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Marine_Pull-ups.jpg/330px-Marine_Pull-ups.jpg',
+    imageUrl: '/exercises/pull-up.png',
     primaryMuscle: 'Latissimus dorsi · Bicepsy · Zadní deltoid',
     description:
       'Jeden z nejlepších cviků pro záda. Nadhmat = více latissimu, podhmat = více bicepsů. Cíl: brada nad hrazdu.',
@@ -313,7 +313,7 @@ const BACK_ARMS: LibraryExercise[] = [
     id: 'cable-row',
     name: 'Veslování na kladce',
     englishName: 'Cable row',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/2/2d/Cable-seated-rows-1.png',
+    imageUrl: '/exercises/cable-row.png',
     primaryMuscle: 'Střední záda · Rhomboids · Bicepsy',
     description:
       'Vsedě na kladce, táhni rukojeti k břichu. Konstantní napětí po celou dobu pohybu — výhoda oproti volným vahám.',
@@ -327,7 +327,7 @@ const BACK_ARMS: LibraryExercise[] = [
     id: 'bicep-curl',
     name: 'Bicepsový zdvih',
     englishName: 'Biceps curl',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Biceps_curl_with_dumbbell_1.svg/330px-Biceps_curl_with_dumbbell_1.svg.png',
+    imageUrl: '/exercises/bicep-curl.png',
     primaryMuscle: 'Bicepsy',
     description:
       'Izolační cvik pro bicepsy. Lze provádět s tyčí, jednoručkami nebo na kladce. Plný rozsah pohybu je klíčový.',
@@ -342,7 +342,7 @@ const BACK_ARMS: LibraryExercise[] = [
     id: 'hammer-curl',
     name: 'Kladivový zdvih',
     englishName: 'Hammer curl',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/6/66/Bicep-hammer-curl-1.png',
+    imageUrl: '/exercises/hammer-curl.png',
     primaryMuscle: 'Brachialis · Bicepsy · Předloktí',
     description:
       'Varianta bicepsového zdvihu s neutrálním úchopem (palce nahoru). Více zapojuje brachialis a předloktí, což přispívá k celkovému objemu paže.',
@@ -356,7 +356,7 @@ const BACK_ARMS: LibraryExercise[] = [
     id: 'tricep-pushdown',
     name: 'Tricepsový pushdown',
     englishName: 'Pushdown (exercise)',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/CableMachinePushdown.JPG/330px-CableMachinePushdown.JPG',
+    imageUrl: '/exercises/tricep-pushdown.png',
     primaryMuscle: 'Tricepsy (všechny tři hlavy)',
     description:
       'Nejpopulárnější izolační cvik pro tricepsy. Na kladce s lanem nebo přímou/V-tyčí. Lokte zůstávají pevně u těla.',
@@ -371,7 +371,7 @@ const BACK_ARMS: LibraryExercise[] = [
     id: 'skull-crusher',
     name: 'Francouzský tlak (Skull Crusher)',
     englishName: 'Skull crusher',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/5/58/Lying-triceps-extension-1.gif',
+    imageUrl: '/exercises/skull-crusher.png',
     primaryMuscle: 'Tricepsy (dlouhá hlava)',
     description:
       'Efektivní cvik pro dlouhou hlavu tricepsu. Prováděj na lavici — tyč nebo jednoručky se spouští k čelu nebo za hlavu.',
