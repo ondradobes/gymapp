@@ -66,7 +66,7 @@ export function evaluateProgressStatus(
   }
 
   if (last.weight > prev.weight) return 'progress';
-  if (last.weight === prev.weight && last.reps > prev.reps + 1) return 'progress';
+  if (last.weight === prev.weight && last.reps > prev.reps) return 'progress';
   if (last.weight < prev.weight) return 'decline';
   if (last.reps < prev.reps - 2) return 'decline';
 

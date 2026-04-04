@@ -11,20 +11,28 @@ interface Props {
 export default function ExerciseManager({ dayId, exercises, onUpdate }: Props) {
   const [newName, setNewName] = useState('');
   const [adding, setAdding] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [toggling, setToggling] = useState<number | null>(null);
 
   async function handleAdd() {
     const name = newName.trim();
-    if (!name) return;
+    if (!name || saving) return;
+    setSaving(true);
     await addExercise(dayId, name);
     setNewName('');
     setAdding(false);
+    setSaving(false);
     onUpdate();
   }
 
   async function handleToggle(exerciseId: number) {
+    if (toggling !== null) return;
+    setToggling(exerciseId);
     await toggleExerciseVisibility(exerciseId);
+    setToggling(null);
     onUpdate();
   }
+
 
   return (
     <div className="mt-6 border-t border-zinc-800 pt-5">
@@ -63,9 +71,10 @@ export default function ExerciseManager({ dayId, exercises, onUpdate }: Props) {
           />
           <button
             onClick={handleAdd}
-            className="bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
+            disabled={saving}
+            className="bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors disabled:opacity-60"
           >
-            Přidat
+            {saving ? '…' : 'Přidat'}
           </button>
           <button
             onClick={() => { setAdding(false); setNewName(''); }}

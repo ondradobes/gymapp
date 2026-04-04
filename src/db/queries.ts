@@ -1,5 +1,6 @@
 import { getDb } from './schema';
 import type { DayOfWeek, Exercise, Session, SessionEntry, SessionWithEntries, ExerciseHistoryEntry } from '../types';
+import { calcEstimatedOneRM } from '../utils/progressLogic';
 
 // ── Backup types ───────────────────────────────────────────────────────────
 
@@ -10,7 +11,6 @@ export interface BackupData {
   sessions: Session[];
   sessionEntries: SessionEntry[];
 }
-import { calcEstimatedOneRM } from '../utils/progressLogic';
 
 // ── Exercises ──────────────────────────────────────────────────────────────
 
@@ -197,23 +197,25 @@ export async function exportAllData(): Promise<BackupData> {
 
 export async function importAllData(backup: BackupData): Promise<void> {
   const db = await getDb();
-  // Wipe all existing data first
+  // Clear and write in a single transaction — if write fails, clear is also rolled back
   const tx = db.transaction(['exercises', 'sessions', 'sessionEntries'], 'readwrite');
-  await Promise.all([
-    tx.objectStore('exercises').clear(),
-    tx.objectStore('sessions').clear(),
-    tx.objectStore('sessionEntries').clear(),
-  ]);
-  await tx.done;
+  const exStore = tx.objectStore('exercises');
+  const sessStore = tx.objectStore('sessions');
+  const entryStore = tx.objectStore('sessionEntries');
 
-  // Write restored data in separate transactions to avoid size limits
-  const tx2 = db.transaction(['exercises', 'sessions', 'sessionEntries'], 'readwrite');
   await Promise.all([
-    ...backup.exercises.map((e) => tx2.objectStore('exercises').put(e)),
-    ...backup.sessions.map((s) => tx2.objectStore('sessions').put(s)),
-    ...backup.sessionEntries.map((e) => tx2.objectStore('sessionEntries').put(e)),
+    exStore.clear(),
+    sessStore.clear(),
+    entryStore.clear(),
   ]);
-  await tx2.done;
+
+  await Promise.all([
+    ...backup.exercises.map((e) => exStore.put(e)),
+    ...backup.sessions.map((s) => sessStore.put(s)),
+    ...backup.sessionEntries.map((e) => entryStore.put(e)),
+  ]);
+
+  await tx.done;
 }
 
 export async function getAllSessionsWithEntries(): Promise<SessionWithEntries[]> {
