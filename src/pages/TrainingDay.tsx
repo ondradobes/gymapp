@@ -171,7 +171,7 @@ export default function TrainingDay() {
 
         {visibleExercises.map((ex) => {
           const lastWeight = getLastWeight(ex.id);
-          const inp = inputs[ex.id] ?? { weight: '', reps: '', sets: '' };
+          const inp = inputs[ex.id] ?? { weight: '', reps: '', sets: '', note: '' };
           const isChartOpen = chartExercise?.id === ex.id;
 
           return (

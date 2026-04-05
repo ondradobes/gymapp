@@ -203,13 +203,13 @@ export async function importAllData(backup: BackupData): Promise<void> {
   const sessStore = tx.objectStore('sessions');
   const entryStore = tx.objectStore('sessionEntries');
 
+  // Queue all operations without any await in between so the transaction
+  // cannot auto-commit between the clears and the puts.
+  // IDB processes requests in order, so clears execute before puts.
   await Promise.all([
     exStore.clear(),
     sessStore.clear(),
     entryStore.clear(),
-  ]);
-
-  await Promise.all([
     ...backup.exercises.map((e) => exStore.put(e)),
     ...backup.sessions.map((s) => sessStore.put(s)),
     ...backup.sessionEntries.map((e) => entryStore.put(e)),
