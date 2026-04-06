@@ -86,6 +86,42 @@ export async function createSession(dayId: DayOfWeek, date: string): Promise<Ses
   return { ...session, id } as Session;
 }
 
+/**
+ * Upsert: if a session already exists for (dayId, date), reuse it and replace
+ * its entries. Otherwise create a new session. This ensures one record per day
+ * so the user can freely re-save during the same training day.
+ */
+export async function saveTrainingDay(
+  dayId: DayOfWeek,
+  date: string,
+  entries: Array<Omit<SessionEntry, 'id' | 'sessionId'>>,
+): Promise<Session> {
+  const db = await getDb();
+
+  // Find existing session for this day+date
+  const existing = await getSessionsByDay(dayId);
+  const todaySession = existing.find((s) => s.date === date);
+
+  let session: Session;
+  if (todaySession) {
+    session = todaySession;
+  } else {
+    const id = await db.add('sessions', { trainingDayId: dayId, date } as Session);
+    session = { id: id as number, trainingDayId: dayId, date };
+  }
+
+  // Replace all entries atomically: delete old ones, insert new ones
+  const oldEntries = await db.getAllFromIndex('sessionEntries', 'by-session', session.id);
+  const tx = db.transaction('sessionEntries', 'readwrite');
+  await Promise.all([
+    ...oldEntries.map((e) => tx.store.delete(e.id)),
+    ...entries.map((e) => tx.store.add({ ...e, sessionId: session.id } as SessionEntry)),
+  ]);
+  await tx.done;
+
+  return session;
+}
+
 // ── Session Entries ────────────────────────────────────────────────────────
 
 export async function getEntriesForSession(sessionId: number): Promise<SessionEntry[]> {

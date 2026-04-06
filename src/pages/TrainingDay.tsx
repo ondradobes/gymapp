@@ -3,11 +3,10 @@ import { useParams, useNavigate, Link } from 'react-router';
 import {
   getExercises,
   getLastSession,
-  createSession,
-  saveSessionEntries,
+  saveTrainingDay,
   getProgressForExercise,
 } from '../db/queries';
-import type { DayOfWeek, Exercise, SessionEntry, SessionWithEntries, ExerciseProgress } from '../types';
+import type { DayOfWeek, Exercise, SessionWithEntries, ExerciseProgress } from '../types';
 import ProgressChart from '../components/ProgressChart';
 import ExerciseManager from '../components/ExerciseManager';
 import ExerciseLibrarySection from '../components/ExerciseLibrarySection';
@@ -98,14 +97,12 @@ export default function TrainingDay() {
 
   async function handleSave() {
     setSaving(true);
-    const session = await createSession(dayId, todayDate());
 
-    const entries: Omit<SessionEntry, 'id'>[] = exercises
+    const entries = exercises
       .filter((ex) => !ex.isHidden)
       .map((ex) => {
         const inp = inputs[ex.id];
         return {
-          sessionId: session.id,
           exerciseId: ex.id,
           weight: inp?.weight ? parseFloat(inp.weight) : null,
           reps: inp?.reps ? parseInt(inp.reps, 10) : null,
@@ -114,7 +111,7 @@ export default function TrainingDay() {
         };
       });
 
-    await saveSessionEntries(session.id, entries);
+    await saveTrainingDay(dayId, todayDate(), entries);
     setSaving(false);
     setSaved(true);
     await loadData();
