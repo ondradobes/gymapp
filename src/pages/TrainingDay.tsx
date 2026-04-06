@@ -289,7 +289,7 @@ export default function TrainingDay() {
           <ExerciseManager
             dayId={dayId}
             exercises={exercises}
-            onUpdate={loadData}
+            onUpdate={() => { setSaved(false); loadData(); }}
           />
         )}
 

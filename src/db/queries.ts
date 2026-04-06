@@ -54,7 +54,11 @@ export async function toggleExerciseVisibility(exerciseId: number): Promise<void
 export async function getSessionsByDay(dayId: DayOfWeek): Promise<Session[]> {
   const db = await getDb();
   const sessions = await db.getAllFromIndex('sessions', 'by-day', dayId);
-  return sessions.sort((a, b) => b.date.localeCompare(a.date)); // newest first
+  return sessions.sort((a, b) => {
+    const dateDiff = b.date.localeCompare(a.date);
+    if (dateDiff !== 0) return dateDiff;
+    return b.id - a.id; // same date → most recently created session first
+  });
 }
 
 export async function getLastSession(dayId: DayOfWeek): Promise<SessionWithEntries | null> {
