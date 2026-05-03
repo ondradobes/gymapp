@@ -258,6 +258,33 @@ export async function importAllData(backup: BackupData): Promise<void> {
   await tx.done;
 }
 
+/** Returns all exercises (across all days) that have at least one history entry. */
+export async function getAllExercisesWithHistory(): Promise<
+  Array<{ exercise: Exercise; history: ExerciseHistoryEntry[] }>
+> {
+  const db = await getDb();
+  const allExercises = await db.getAll('exercises');
+  const results = await Promise.all(
+    allExercises.map(async (exercise) => ({
+      exercise,
+      history: await getExerciseHistory(exercise.id),
+    })),
+  );
+  return results.filter((r) => r.history.length > 0);
+}
+
+export async function getTotalSessionCount(): Promise<number> {
+  const db = await getDb();
+  return db.count('sessions');
+}
+
+/** Returns ISO date strings (YYYY-MM-DD) for every session ever recorded. */
+export async function getAllSessionDates(): Promise<string[]> {
+  const db = await getDb();
+  const sessions = await db.getAll('sessions');
+  return sessions.map((s) => s.date);
+}
+
 export async function getAllSessionsWithEntries(): Promise<SessionWithEntries[]> {
   const db = await getDb();
   const sessions = await db.getAll('sessions');

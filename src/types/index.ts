@@ -81,3 +81,36 @@ export interface WeightRecommendation {
   /** The increment step used (1 / 2.5 / 5 kg) */
   increment: number;
 }
+
+// ── Progress overview page types ───────────────────────────────────────────
+
+export type PeriodOption = '7d' | '30d' | '90d' | 'all';
+
+export type TrendStatus = 'growing' | 'stagnating' | 'declining' | 'insufficient_data';
+
+/** Computed data for one exercise within the Progress overview page. */
+export interface ExerciseWithStats {
+  exercise: Exercise;
+  /** Full history, oldest first */
+  history: ExerciseHistoryEntry[];
+  /** History filtered to the selected period */
+  periodHistory: ExerciseHistoryEntry[];
+  trend: TrendStatus;
+  /** % change in estimated 1RM from first to last entry in period */
+  changePercent: number | null;
+  /** Total volume (weight × reps × sets) in current period */
+  periodVolume: number;
+  /** Total volume in the previous same-length period (for comparison) */
+  prevPeriodVolume: number;
+  lastWeight: number | null;
+  lastReps: number | null;
+  bestWeight: number | null;
+  lastDate: string | null;
+  /** Days since last session (null if no history) */
+  daysSinceLast: number | null;
+}
+
+export interface ProgressInsight {
+  type: 'positive' | 'warning' | 'neutral';
+  text: string;
+}
