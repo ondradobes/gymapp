@@ -1,7 +1,11 @@
 import type {
   ExerciseHistoryEntry,
   ExerciseStats,
+  ExerciseWithStats,
+  Exercise,
   ProgressStatus,
+  ProgressInsight,
+  TrendStatus,
   WeightRecommendation,
 } from '../types';
 
@@ -135,7 +139,203 @@ export function recommendNextWeight(
   };
 }
 
-// ── Aggregate stats ───────────────────────────────────────────────────────
+// ── Period-based progress utilities ──────────────────────────────────────────
+
+/** Returns entries within the last `periodDays` days. null = all time. */
+export function filterByPeriod(
+  history: ExerciseHistoryEntry[],
+  periodDays: number | null,
+): ExerciseHistoryEntry[] {
+  if (periodDays === null) return history;
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - periodDays);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  return history.filter((e) => e.date >= cutoffStr);
+}
+
+/**
+ * Returns entries from the period immediately before the current period.
+ * Used to compute volume change vs. the previous same-length window.
+ */
+export function filterPrevPeriod(
+  history: ExerciseHistoryEntry[],
+  periodDays: number | null,
+): ExerciseHistoryEntry[] {
+  if (periodDays === null) return [];
+  const today = new Date();
+  const currentCutoff = new Date(today);
+  currentCutoff.setDate(currentCutoff.getDate() - periodDays);
+  const prevCutoff = new Date(today);
+  prevCutoff.setDate(prevCutoff.getDate() - periodDays * 2);
+  const currentCutoffStr = currentCutoff.toISOString().slice(0, 10);
+  const prevCutoffStr = prevCutoff.toISOString().slice(0, 10);
+  return history.filter((e) => e.date >= prevCutoffStr && e.date < currentCutoffStr);
+}
+
+/** Volume of a single history entry: weight × reps × sets */
+export function calcEntryVolume(entry: ExerciseHistoryEntry): number {
+  return entry.weight * entry.reps * (entry.sets ?? 1);
+}
+
+/** Sum of volumes across an array of history entries */
+export function calcTotalVolume(history: ExerciseHistoryEntry[]): number {
+  return history.reduce((sum, e) => sum + calcEntryVolume(e), 0);
+}
+
+/**
+ * Trend based on 3% threshold of estimated 1RM (first vs last in period).
+ * > +3% → growing, < -3% → declining, else → stagnating.
+ */
+export function evaluateTrend(periodHistory: ExerciseHistoryEntry[]): TrendStatus {
+  if (periodHistory.length < 2) return 'insufficient_data';
+  const first = periodHistory[0];
+  const last = periodHistory[periodHistory.length - 1];
+  if (first.estimatedOneRM <= 0) return 'insufficient_data';
+  const change = (last.estimatedOneRM - first.estimatedOneRM) / first.estimatedOneRM;
+  if (change > 0.03) return 'growing';
+  if (change < -0.03) return 'declining';
+  return 'stagnating';
+}
+
+/** % change in estimated 1RM from first to last entry in period. */
+export function calcChangePercent(periodHistory: ExerciseHistoryEntry[]): number | null {
+  if (periodHistory.length < 2) return null;
+  const first = periodHistory[0];
+  const last = periodHistory[periodHistory.length - 1];
+  if (first.estimatedOneRM <= 0) return null;
+  return Math.round(((last.estimatedOneRM - first.estimatedOneRM) / first.estimatedOneRM) * 100);
+}
+
+/** Builds the full ExerciseWithStats object for one exercise given a period. */
+export function buildExerciseWithStats(
+  exercise: Exercise,
+  history: ExerciseHistoryEntry[],
+  periodDays: number | null,
+  today: string,
+): ExerciseWithStats {
+  const periodHistory = filterByPeriod(history, periodDays);
+  const prevPeriodHistory = filterPrevPeriod(history, periodDays);
+
+  const last = history.length > 0 ? history[history.length - 1] : null;
+  const bestEntry = history.reduce<ExerciseHistoryEntry | null>(
+    (best, e) => (!best || e.weight > best.weight ? e : best),
+    null,
+  );
+
+  const daysSinceLast = last
+    ? Math.round(
+        (new Date(today).getTime() - new Date(last.date).getTime()) / 86_400_000,
+      )
+    : null;
+
+  return {
+    exercise,
+    history,
+    periodHistory,
+    trend: evaluateTrend(periodHistory),
+    changePercent: calcChangePercent(periodHistory),
+    periodVolume: calcTotalVolume(periodHistory),
+    prevPeriodVolume: calcTotalVolume(prevPeriodHistory),
+    lastWeight: last?.weight ?? null,
+    lastReps: last?.reps ?? null,
+    bestWeight: bestEntry?.weight ?? null,
+    lastDate: last?.date ?? null,
+    daysSinceLast,
+  };
+}
+
+/** Generates up to 6 actionable insights from all exercises. */
+export function generateInsights(exercises: ExerciseWithStats[]): ProgressInsight[] {
+  const insights: ProgressInsight[] = [];
+  const withData = exercises.filter((e) => e.periodHistory.length >= 2);
+
+  if (exercises.every((e) => e.history.length === 0)) {
+    return [
+      {
+        type: 'neutral',
+        text: 'Zatím tu nejsou žádná data. Odcvič pár tréninků a tady uvidíš svůj pokrok.',
+      },
+    ];
+  }
+
+  // Track which exercises already got a dedicated insight to avoid duplicates
+  const mentionedIds = new Set<number>();
+
+  // Fastest growing exercise
+  const growing = withData
+    .filter((e) => e.trend === 'growing' && e.changePercent !== null)
+    .sort((a, b) => (b.changePercent ?? 0) - (a.changePercent ?? 0));
+  if (growing.length > 0) {
+    const top = growing[0];
+    const pct = top.changePercent != null ? ` +${top.changePercent} %` : '';
+    insights.push({
+      type: 'positive',
+      text: `Největší pokrok máš u cviku „${top.exercise.name}":${pct} za vybrané období. Skvělá práce!`,
+    });
+    mentionedIds.add(top.exercise.id);
+  }
+
+  // Stagnating exercises
+  const stagnating = withData.filter((e) => e.trend === 'stagnating');
+  if (stagnating.length === 1) {
+    insights.push({
+      type: 'warning',
+      text: `„${stagnating[0].exercise.name}" stagnuje. Zkus přidat opakování, váhu nebo upravit regeneraci.`,
+    });
+    mentionedIds.add(stagnating[0].exercise.id);
+  } else if (stagnating.length > 1) {
+    const names = stagnating
+      .slice(0, 2)
+      .map((e) => `„${e.exercise.name}"`)
+      .join(' a ');
+    const extra = stagnating.length > 2 ? ` (a další ${stagnating.length - 2})` : '';
+    insights.push({
+      type: 'warning',
+      text: `${names}${extra} stagnují. Zkus nový stimul — přidej váhu nebo opakování.`,
+    });
+    stagnating.forEach((e) => mentionedIds.add(e.exercise.id));
+  }
+
+  // Declining exercises (max 2)
+  withData
+    .filter((e) => e.trend === 'declining')
+    .slice(0, 2)
+    .forEach((e) => {
+      insights.push({
+        type: 'warning',
+        text: `U cviku „${e.exercise.name}" výkon klesá. Zkontroluj regeneraci, techniku nebo celkový objem.`,
+      });
+      mentionedIds.add(e.exercise.id);
+    });
+
+  // Exercises not trained for ≥ 14 days — skip any already mentioned above
+  exercises
+    .filter(
+      (e) =>
+        e.history.length > 0 &&
+        e.daysSinceLast !== null &&
+        e.daysSinceLast >= 14 &&
+        !mentionedIds.has(e.exercise.id),
+    )
+    .sort((a, b) => (b.daysSinceLast ?? 0) - (a.daysSinceLast ?? 0))
+    .slice(0, 2)
+    .forEach((e) => {
+      insights.push({
+        type: 'neutral',
+        text: `„${e.exercise.name}" jsi necvičil ${e.daysSinceLast} dní. Možná stojí za to ho znovu zařadit.`,
+      });
+    });
+
+  // Fallback when there's data but no specific insight fired
+  if (insights.length === 0 && exercises.some((e) => e.history.length > 0)) {
+    insights.push({
+      type: 'neutral',
+      text: 'Přidej více tréninků a konkrétní doporučení se začnou zobrazovat.',
+    });
+  }
+
+  return insights.slice(0, 6);
+}
 
 /** Computes all stats for an exercise from its history. */
 export function computeExerciseStats(
