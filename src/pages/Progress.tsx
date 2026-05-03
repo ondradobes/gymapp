@@ -7,6 +7,7 @@ import PeriodSelector from '../components/progress/PeriodSelector';
 import OverviewStats from '../components/progress/OverviewStats';
 import ExerciseProgressRow from '../components/progress/ExerciseProgressRow';
 import InsightsSection from '../components/progress/InsightsSection';
+import ExerciseSummaryChart from '../components/progress/ExerciseSummaryChart';
 
 function periodToDays(p: PeriodOption): number | null {
   if (p === '7d') return 7;
@@ -124,6 +125,8 @@ export default function Progress() {
               stagnatingCount={stagnatingCount}
               decliningCount={decliningCount}
             />
+
+            <ExerciseSummaryChart exercises={exercisesWithStats} />
 
             {insights.length > 0 && <InsightsSection insights={insights} />}
 

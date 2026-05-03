@@ -114,3 +114,20 @@ export interface ProgressInsight {
   type: 'positive' | 'warning' | 'neutral';
   text: string;
 }
+
+// ── Summary chart types ────────────────────────────────────────────────────
+
+/** One point in the unified multi-exercise chart dataset. */
+export interface SummaryChartDataPoint {
+  date: string; // YYYY-MM-DD
+  /** Keyed by `ex_${exerciseId}`, value is estimated 1RM (kg) */
+  [key: string]: string | number | undefined;
+}
+
+/** Metadata for a single exercise line in the summary chart. */
+export interface SummaryChartSeries {
+  exerciseId: number;
+  name: string;
+  color: string;
+  dataKey: string; // `ex_${exerciseId}`
+}
