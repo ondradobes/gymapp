@@ -7,6 +7,8 @@ import type {
   ProgressInsight,
   TrendStatus,
   WeightRecommendation,
+  SummaryChartDataPoint,
+  SummaryChartSeries,
 } from '../types';
 
 // ── 1RM calculation ───────────────────────────────────────────────────────
@@ -335,6 +337,86 @@ export function generateInsights(exercises: ExerciseWithStats[]): ProgressInsigh
   }
 
   return insights.slice(0, 6);
+}
+
+// ── Summary chart helpers ─────────────────────────────────────────────────
+
+const CHART_PALETTE = [
+  '#a78bfa', // violet-400
+  '#34d399', // emerald-400
+  '#60a5fa', // blue-400
+  '#f87171', // red-400
+  '#fbbf24', // amber-400
+  '#e879f9', // fuchsia-400
+  '#2dd4bf', // teal-400
+  '#fb923c', // orange-400
+  '#818cf8', // indigo-400
+  '#4ade80', // green-400
+] as const;
+
+/**
+ * Selects the top N exercises to show in the summary chart.
+ * Priority: most records → most recent session → highest period volume.
+ */
+export function selectTopExercises(
+  exercises: ExerciseWithStats[],
+  n: number,
+): ExerciseWithStats[] {
+  return [...exercises]
+    .filter((e) => e.periodHistory.length >= 2)
+    .sort((a, b) => {
+      const byRecords = b.periodHistory.length - a.periodHistory.length;
+      if (byRecords !== 0) return byRecords;
+      const dateA = a.lastDate ?? '';
+      const dateB = b.lastDate ?? '';
+      const byDate = dateB.localeCompare(dateA);
+      if (byDate !== 0) return byDate;
+      return b.periodVolume - a.periodVolume;
+    })
+    .slice(0, n);
+}
+
+/**
+ * Builds a unified date-keyed dataset for the multi-line Recharts chart.
+ * Each point has `ex_${id}: estimatedOneRM` for each exercise.
+ * Returns { dataset, series }.
+ */
+export function buildChartDataset(exercises: ExerciseWithStats[]): {
+  dataset: SummaryChartDataPoint[];
+  series: SummaryChartSeries[];
+} {
+  const series: SummaryChartSeries[] = exercises.map((e) => ({
+    exerciseId: e.exercise.id,
+    name: e.exercise.name,
+    color: CHART_PALETTE[e.exercise.id % CHART_PALETTE.length],
+    dataKey: `ex_${e.exercise.id}`,
+  }));
+
+  // Collect all unique dates across all exercises
+  const allDates = [
+    ...new Set(exercises.flatMap((e) => e.periodHistory.map((h) => h.date))),
+  ].sort();
+
+  const dataset: SummaryChartDataPoint[] = allDates.map((date) => {
+    const point: SummaryChartDataPoint = { date };
+    for (const e of exercises) {
+      // Use the best (highest) e1RM on that date
+      const entries = e.periodHistory.filter((h) => h.date === date);
+      if (entries.length > 0) {
+        const best = entries.reduce((b, h) =>
+          h.estimatedOneRM > b.estimatedOneRM ? h : b,
+        );
+        point[`ex_${e.exercise.id}`] = best.estimatedOneRM;
+        // Store raw data for tooltip
+        point[`ex_${e.exercise.id}_weight`] = best.weight;
+        point[`ex_${e.exercise.id}_reps`] = best.reps;
+        point[`ex_${e.exercise.id}_sets`] = best.sets;
+      }
+    }
+    return point;
+  });
+
+  return { dataset, series };
 }
 
 /** Computes all stats for an exercise from its history. */
