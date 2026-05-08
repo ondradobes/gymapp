@@ -17,8 +17,6 @@ interface Props {
 
 type ScaleMode = 'log' | 'linear';
 
-const LOG_TICKS = [2.5, 5, 10, 25, 50, 75, 100, 150, 200];
-
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
   return d.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short' });
@@ -95,16 +93,19 @@ export default function ExerciseSummaryChart({ exercises }: Props) {
     [selectedExercises],
   );
 
-  const logTicks = useMemo(() => {
-    if (scaleMode !== 'log' || dataset.length === 0) return undefined;
+  // Compute explicit Y domain from actual data so log scale never clips lines.
+  // 'auto' can clip values that fall outside manually-specified ticks.
+  const yDomain = useMemo((): [number, number] | ['auto', 'auto'] => {
+    if (dataset.length === 0) return ['auto', 'auto'];
     const vals = series.flatMap((s) =>
       dataset.map((d) => d[s.dataKey] as number | undefined).filter((v): v is number => v != null),
     );
-    if (vals.length === 0) return undefined;
+    if (vals.length === 0) return ['auto', 'auto'];
     const min = Math.min(...vals);
     const max = Math.max(...vals);
-    return LOG_TICKS.filter((t) => t >= min * 0.8 && t <= max * 1.2);
-  }, [scaleMode, dataset, series]);
+    // Give 15% headroom on each side so lines don't touch the edges
+    return [Math.floor(min * 0.85), Math.ceil(max * 1.15)];
+  }, [dataset, series]);
 
   const toggleLine = (dataKey: string) => {
     setHiddenKeys((prev) => {
@@ -192,13 +193,11 @@ export default function ExerciseSummaryChart({ exercises }: Props) {
           />
           <YAxis
             scale={scaleMode}
-            domain={scaleMode === 'log' ? ['auto', 'auto'] : ['auto', 'auto']}
-            ticks={scaleMode === 'log' ? logTicks : undefined}
-            tickFormatter={(v: number) => `${v}`}
+            domain={yDomain}
+            tickFormatter={(v: number) => `${Math.round(v)}`}
             tick={{ fill: '#71717a', fontSize: 10 }}
             axisLine={false}
             tickLine={false}
-            allowDataOverflow={scaleMode === 'log'}
           />
           <Tooltip
             content={<CustomTooltip series={series} />}
